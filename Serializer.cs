@@ -1,38 +1,30 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using UnityEngine;
+﻿using System.IO;
+using Newtonsoft.Json;
 
-namespace Bulka
+static public class Serializer
 {
-	static public class Serializer
+	static public string ToJson(this object obj)
 	{
-		public const string PrefabTag = "$prefab";
+		return JsonConvert.SerializeObject(obj, Formatting.Indented);
+	}
 
-		static public string Serialize(object obj)
-		{
-			var jo = JObject.FromObject(obj);
-			var persistent = obj as IPersistent;
-			if (persistent != null)
-			{
-				jo[PrefabTag] = persistent.Prefab.name;
-			}
+	static public T To<T>(this string json)
+	{
+		return JsonConvert.DeserializeObject<T>(json);
+	}
 
-			return jo.ToString(Formatting.Indented);
-		}
+	static public void SaveTo(this object obj, string path)
+	{
+		File.WriteAllText(path, obj.ToJson());
+	}
 
-		static public T Deserialize<T>(string json)
-		{
-			return JsonConvert.DeserializeObject<T>(json);
-		}
+	static public T ReadFrom<T>(string path)
+	{
+		return File.ReadAllText(path).To<T>();
+	}
 
-		static public string PrefabName(string json)
-		{
-			return (string)JObject.Parse(json)[PrefabTag];
-		}
-
-		static public void Populate(string json, MonoBehaviour target)
-		{
-			JsonConvert.PopulateObject(json, target);
-		}
+	static public void Populate(this string json, object target)
+	{
+		JsonConvert.PopulateObject(json, target);
 	}
 }

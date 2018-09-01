@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 
-public interface IPersistent
+namespace Bulka
 {
-	MonoBehaviour Prefab { get; set; }
+	public interface IPersistent
+	{
+		MonoBehaviour Prefab { get; set; }
+	}
 }

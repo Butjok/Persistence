@@ -4,69 +4,72 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-[ExecuteInEditMode]
-public class PersistentTracker : MonoBehaviour, IReadOnlyDictionary<string, MonoBehaviour>
+namespace Bulka
 {
-	[Serializable]
-	public class Dict : SerializableDictionary<string, MonoBehaviour> { }
-	[SerializeField] private Dict objects = new Dict();
-
-	static public string NewGuid()
+	[ExecuteInEditMode]
+	public class PersistentTracker : MonoBehaviour, IReadOnlyDictionary<string, MonoBehaviour>
 	{
-		return Guid.NewGuid().ToString();
-	}
+		[Serializable]
+		public class Dict : SerializableDictionary<string, MonoBehaviour> { }
+		[SerializeField] private Dict objects = new Dict();
 
-	[ContextMenu(nameof(Refresh))]
-	public void Refresh()
-	{
-		var actual = FindObjectsOfType<MonoBehaviour>().Where(obj => obj is IPersistent).ToList();
-		foreach (var pair in objects.Where(pair => !actual.Contains(pair.Value)).ToList())
+		static public string NewGuid()
 		{
-			objects.Remove(pair.Key);
+			return Guid.NewGuid().ToString();
 		}
 
-		foreach (var obj in actual.Where(obj => !objects.ContainsValue(obj)))
+		[ContextMenu(nameof(Refresh))]
+		public void Refresh()
 		{
-			objects[NewGuid()] = obj;
+			var actual = FindObjectsOfType<MonoBehaviour>().Where(obj => obj is IPersistent).ToList();
+			foreach (var pair in objects.Where(pair => !actual.Contains(pair.Value)).ToList())
+			{
+				objects.Remove(pair.Key);
+			}
+
+			foreach (var obj in actual.Where(obj => !objects.ContainsValue(obj)))
+			{
+				objects[NewGuid()] = obj;
+			}
 		}
-	}
 
-	public T Get<T>(string guid) where T : MonoBehaviour
-	{
-		return (T)this[guid];
-	}
-
-	protected void OnEnable()
-	{
-		if (Application.isEditor)
+		public T Get<T>(string guid) where T : MonoBehaviour
 		{
-			Refresh();
+			return (T)this[guid];
 		}
+
+		protected void OnEnable()
+		{
+			if (Application.isEditor)
+			{
+				Refresh();
+			}
+		}
+
+		public IEnumerator<KeyValuePair<string, MonoBehaviour>> GetEnumerator()
+		{
+			return objects.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return ((IEnumerable)objects).GetEnumerator();
+		}
+
+		public int Count => objects.Count;
+
+		public bool ContainsKey(string key)
+		{
+			return objects.ContainsKey(key);
+		}
+
+		public bool TryGetValue(string key, out MonoBehaviour value)
+		{
+			return objects.TryGetValue(key, out value);
+		}
+
+		public MonoBehaviour this[string key] => objects[key];
+		public IEnumerable<string> Keys => objects.Keys;
+		public IEnumerable<MonoBehaviour> Values => objects.Values;
 	}
-
-	public IEnumerator<KeyValuePair<string, MonoBehaviour>> GetEnumerator()
-	{
-		return objects.GetEnumerator();
-	}
-
-	IEnumerator IEnumerable.GetEnumerator()
-	{
-		return ((IEnumerable)objects).GetEnumerator();
-	}
-
-	public int Count => objects.Count;
-
-	public bool ContainsKey(string key)
-	{
-		return objects.ContainsKey(key);
-	}
-
-	public bool TryGetValue(string key, out MonoBehaviour value)
-	{
-		return objects.TryGetValue(key, out value);
-	}
-
-	public MonoBehaviour this[string key] => objects[key];
-	public IEnumerable<string> Keys => objects.Keys;
-	public IEnumerable<MonoBehaviour> Values => objects.Values;
 }
